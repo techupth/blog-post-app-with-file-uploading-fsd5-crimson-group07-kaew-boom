@@ -2,10 +2,15 @@ import { Router } from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { db } from "../utils/db.js";
+import multer from "multer";
 
 const authRouter = Router();
 
-authRouter.post("/register", async (req, res) => {
+const multerUpload = multer({ dest: "uploads/" });
+const avatarUpload = multerUpload.fields([{ name: "avatar", maxCount: 2 }]);
+
+authRouter.post("/register", avatarUpload, async (req, res) => {
+  console.log(req.files.avatar);
   const user = {
     username: req.body.username,
     password: req.body.password,
@@ -36,6 +41,8 @@ authRouter.post("/login", async (req, res) => {
     });
   }
 
+  const avatarUrl = await cloudinaryUpload(req.files);
+  user["avatars"] = avatarUrl;
   const isValidPassword = await bcrypt.compare(
     req.body.password,
     user.password
